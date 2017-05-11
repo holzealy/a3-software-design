@@ -9,9 +9,9 @@ function CirclePack() {
                 left: 10
         },
         padding = 0,
-        circleScale = 5,
+        circleScale = 1,
         title = 'My CirclePack',
-        colors = d3.schemeCategory10;
+        colors = d3.scaleOrdinal(d3.schemeCategory10);
 
     // generate chart
     function myChart(selection) {
@@ -20,21 +20,10 @@ function CirclePack() {
             .size([width - margin.left, height - margin.top])
             .padding(padding);
 
-        var root = d3.hierarchy(data)
-            .eachBefore(function(d) {
-                d.data.id = (d.parent ? d.parent.data.id + '.' : '') + d.data.name;
-            })
-            .sum(function(d) {
-                return +d.size;
-            })
-            .sort(function(a, b) {
-                return b.value - a.value;
-            });
-
-        var colorScale = d3.scaleOrdinal().domain([-1, 0, 1]).range(colors);
+        //var colorScale = d3.scaleOrdinal().domain([-1, 0, 1]).range(colors);
 
         // iterate through selections
-        selection.each(function(data) {
+        selection.each(function(root) {
             var svg = d3.select(this)
                 .selectAll('svg')
                 .data([root]);
@@ -69,8 +58,8 @@ function CirclePack() {
                 .attr('cx', function(d) { return d.x; })
                 .attr('cy', function(d) { return d.y; })
                 .attr('fill', function(d) {
-                    console.log(d.data.name)
-                    return colorScale(d.data.name);
+                    console.log(d)
+                    return colors(d.parent.data.key);
                 });
 
             circles.exit().remove();
@@ -110,7 +99,7 @@ function CirclePack() {
     // function to get or set color property
     myChart.colors = function(value) {
         if (!arguments) return colors;
-        colorScale = value;
+        colors = d3.scaleOrdinal(value);
         return myChart;
     }
 
