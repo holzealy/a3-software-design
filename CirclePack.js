@@ -11,7 +11,8 @@ function CirclePack() {
         padding = 0,
         circleScale = 1,
         title = 'My CirclePack',
-        colors = d3.scaleOrdinal(d3.schemeCategory10);
+        colorScale = d3.scaleOrdinal(d3.schemeCategory20b)
+        nameVar = null;
 
     // generate chart
     function myChart(selection) {
@@ -19,8 +20,6 @@ function CirclePack() {
         var pack = d3.pack()
             .size([width - margin.left, height - margin.top])
             .padding(padding);
-
-        //var colorScale = d3.scaleOrdinal().domain([-1, 0, 1]).range(colors);
 
         // iterate through selections
         selection.each(function(root) {
@@ -33,6 +32,7 @@ function CirclePack() {
                 .attr('width', width)
                 .attr('height', height);
 
+            // add title
             svgEnter.append('text')
                 .attr('x', width / 2)
                 .attr('y', margin.top)
@@ -46,23 +46,34 @@ function CirclePack() {
             // build circle pack data structure
             pack(root);
 
-            var circles = d3.select(this).select('.chart')
-                .selectAll('circle')
-                .data(root.leaves());
+            // create g elements for each leaf
+            var node = d3.select(this).select('.chart')
+                .selectAll('node')
+                .data(root.leaves())
+                .enter()
+                .append('g')
+                .attr('class', 'node')
+                .attr('transform', function(d) { return 'translate(' + d.x + ',' + d.y + ')'; });
 
-            circles.enter().append('circle')
-                .merge(circles)
-                .attr('class', 'circle')
-                .transition().duration(2000)
+            // append circles
+            node.append('circle')
                 .attr('r', function(d) { return d.r * circleScale; })
-                .attr('cx', function(d) { return d.x; })
-                .attr('cy', function(d) { return d.y; })
                 .attr('fill', function(d) {
-                    console.log(d)
-                    return colors(d.parent.data.key);
-                });
+                    return colorScale(d.parent.data.key);
+                })
+                .attr('opacity', 0.5);
 
-            circles.exit().remove();
+            // append labels for each circles
+            node.append('text')
+                .text(function(d) {
+                    return d.data[nameVar];
+                })
+                .attr('x', -15)
+                .attr('font-size', 10);
+    
+            // remove elements
+            node.exit().remove();
+            svg.exit().remove();            
 
         });
     }
@@ -97,9 +108,9 @@ function CirclePack() {
     }
 
     // function to get or set color property
-    myChart.colors = function(value) {
-        if (!arguments) return colors;
-        colors = d3.scaleOrdinal(value);
+    myChart.colorScale = function(value) {
+        if (!arguments) return colorScale;
+        colorScale = d3.scaleOrdinal(value);
         return myChart;
     }
 
@@ -107,6 +118,13 @@ function CirclePack() {
     myChart.title = function(value) {
         if (!arguments) return title;
         title = value;
+        return myChart;
+    }
+
+    // function to get or set circle name variable
+    myChart.nameVar = function(value) {
+        if (!arguments) return nameVar;
+        nameVar = value;
         return myChart;
     }
 
